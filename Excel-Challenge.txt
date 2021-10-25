@@ -1,0 +1,211 @@
+Attribute VB_Name = "Module1"
+Sub Worksheet()
+
+Worksheets("2014").Activate
+Call Tickers
+
+Worksheets("2015").Activate
+Call Tickers
+
+Worksheets("2016").Activate
+Call Tickers
+
+End Sub
+
+
+Sub Tickers()
+
+'Number of rows of data in spreadsheet
+
+    Dim iRow As Long
+
+    'Find the last non-blank cell in column A(1)
+    'https://www.excelcampus.com/vba/find-last-row-column-cell/
+    iRow = Cells(Rows.Count, 1).End(xlUp).Row
+       
+    'MsgBox iRow
+    
+ 'Define Variables
+ 
+    Dim Ticker As String
+    Dim RowStart As Long
+    Dim RowEnd As Long
+    Dim YearlyChange As Double
+    Dim PercentChange As Double
+    Dim TotalStockVolume As Double
+    Dim PriceBeginning As Double
+    Dim PriceStart As Double
+    Dim PriceEnd As Double
+    Dim RowWrite As Integer
+    Dim TickerCount As Long
+    
+    
+ 'Initialize
+ 
+    Ticker = Cells(2, 1).Value
+    PriceStart = Cells(2, 3).Value
+    RowStart = 2
+    RowWrite = 2
+    TickerCount = 0
+    
+ 'Loop through Data
+ 
+    For i = 3 To iRow  'Use iRow after debug
+    
+        If Ticker <> Cells(i, 1).Value Then
+        RowEnd = i - 1
+        
+            'Calculate Ticker Summary Data
+            PriceEnd = Cells(RowEnd, 6).Value
+            YearlyChange = PriceEnd - PriceStart
+            If PriceStart > 0 Then
+                PercentChange = PriceEnd / PriceStart - 1
+            End If
+                'Calculate Total Stock Volume
+                TotalStockVolume = 0
+                For j = RowStart To RowEnd
+                    TotalStockVolume = TotalStockVolume + Cells(j, 7).Value
+                Next j
+            
+            'Write Ticker Data
+            Cells(RowWrite, 9).Value = Ticker
+            Cells(RowWrite, 10).Value = YearlyChange
+            Cells(RowWrite, 11).Value = PercentChange
+            Cells(RowWrite, 12).Value = TotalStockVolume
+            
+        Ticker = Cells(i, 1).Value
+        PriceStart = Cells(i, 3).Value
+        RowWrite = RowWrite + 1
+        RowStart = i
+        TickerCount = TickerCount + 1
+            
+         End If
+         
+    Next i
+        
+    'Last Ticker
+        RowEnd = iRow
+        
+    'Calculate Ticker Summary Data
+            PriceEnd = Cells(RowEnd, 6).Value
+            YearlyChange = PriceEnd - PriceStart
+            PercentChange = PriceEnd / PriceStart - 1
+                
+                'Calculate Total Stock Volume
+                TotalStockVolume = 0
+                For j = RowStart To RowEnd
+                    TotalStockVolume = TotalStockVolume + Cells(j, 7).Value
+                Next j
+            
+            'Write Ticker Data
+            Cells(RowWrite, 9).Value = Ticker
+            Cells(RowWrite, 10).Value = YearlyChange
+            Cells(RowWrite, 11).Value = PercentChange
+            Cells(RowWrite, 12).Value = TotalStockVolume
+        
+            TickerCount = TickerCount + 1
+            
+       'Add Headers
+    
+        Range("I1").Value = "Ticker"
+        Range("J1").Value = "Yearly Change"
+        Range("K1").Value = "Percent Change"
+        Range("L1").Value = "Total Stock Volume"
+        
+        Range("I1,L1").HorizontalAlignment = xlCenter
+        Columns("I:L").AutoFit
+        
+        'Conditional Formatting
+        
+        For i = 2 To (TickerCount + 1)
+        
+        Cells(i, 9).FormatConditions.Delete
+        
+        If Cells(i, 10).Value > 0 Then
+        Cells(i, 9).Interior.Color = RGB(0, 255, 0)
+        
+        ElseIf Cells(i, 10).Value < 0 Then
+        Cells(i, 9).Interior.Color = RGB(255, 0, 0)
+        
+        End If
+        
+        Next i
+        
+        ' Relative Stock Performance for Year
+    
+        'Headers
+        Range("P1").Value = "Ticker"
+        Range("Q1").Value = "Value"
+        Range("P1,Q1").HorizontalAlignment = xlCenter
+        Columns("P:Q").AutoFit
+
+        'Row Labels
+        Range("O2").Value = "Greatest Pct Increase"
+        Range("O3").Value = "Greatest Pct Decrease"
+        Range("O4").Value = "Greatest Total Volume"
+        Range("O5").Value = "Ticker Count"
+        
+        Columns("O:O").AutoFit
+        
+        'Define Variables for Year End Performance
+        
+        Dim GPIVTicker As String
+        Dim GPDVTicker As String
+        Dim GTVTicker As String
+        Dim GPIV As Double
+        Dim GPDV As Double
+        Dim GTV As Double
+        Dim GPIVrow As Long
+        Dim GPDVrow As Long
+        Dim GTVrow As Long
+        
+        'Initialize Variables
+        
+        GPIV = 0
+        GPIVrow = 2
+        
+        GPDV = 0
+        GPDVrow = 2
+        
+        GTV = 0
+        GTVrow = 2
+        
+        'Summary Loop
+        
+        For i = 2 To (TickerCount + 1)
+            PercentChange = Cells(i, 11)
+            TotalStockVolume = Cells(i, 12)
+                If PercentChange > GPIV Then
+                GPIV = PercentChange
+                GPIVrow = i
+                
+                ElseIf PercentChange < GPDV Then
+                GPDV = PercentChange
+                GPDVrow = i
+                
+                ElseIf TotalStockVolume > GTV Then
+                GTV = TotalStockVolume
+                GTVrow = i
+                
+                End If
+        Next i
+        
+        GPIVTicker = Cells(GPIVrow, 9).Value
+        GPDVTicker = Cells(GPDVrow, 9).Value
+        GTVTicker = Cells(GTVrow, 9).Value
+        
+        Range("P2").Value = GPIVTicker
+        Range("Q2").Value = GPIV
+        Range("P3").Value = GPDVTicker
+        Range("Q3").Value = GPDV
+        Range("P4").Value = GTVTicker
+        Range("Q4").Value = GTV
+        Range("P5").Value = TickerCount
+        
+        Range("Q2,Q3").NumberFormat = "0.00%"
+        
+        Columns("P:Q").AutoFit
+        Range("P5").HorizontalAlignment = xlCenter
+        
+End Sub
+
